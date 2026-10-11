@@ -24,9 +24,6 @@ extends CharacterBody2D
 @onready var up: ColorRect = $"../All UIs/Cutscene Stuff/Up"
 @onready var down: ColorRect = $"../All UIs/Cutscene Stuff/Down"
 @onready var run_tutorial: RichTextLabel = $"../All UIs/Tutorials/Run Tutorial"
-@onready var dash_tutorial_mobil: RichTextLabel = $"../All UIs/Tutorials/Dash Tutorial Mobil"
-@onready var run_tutorial_mobil: RichTextLabel = $"../All UIs/Tutorials/Run Tutorial Mobil"
-@onready var attack_tutorial_mobil: RichTextLabel = $"../All UIs/Tutorials/Attack Tutorial Mobil"
 
 @export var WALK_SPEED := 55
 @export var RUN_SPEED := 145
@@ -69,24 +66,14 @@ var last_delta := 0.0
 var can_attack := true
 
 func _ready() -> void:
-	if OS.has_feature("mobile"):
-		vars.on_mobil = true
-	else:
-		vars.on_mobil = false
 	speed = WALK_SPEED
 	camera.position_smoothing_enabled = false
 	transition.to_normal()
 	global_position = vars.player_spawn
 	if vars.player_spawn == Vector2(-134, 658) and !vars.cut_played:
-		if vars.on_mobil:
-			cutscenes.play("intro_mobil")
-		else:
-			cutscenes.play("intro")
+		cutscenes.play("intro")
 	else:
-		if vars.on_mobil:
-			cutscenes.play("reset_mobil")
-		else:
-			cutscenes.play("reset")
+		cutscenes.play("reset")
 	hit_collision.disabled = true
 	is_dying = false
 	Input.mouse_mode = Input.MOUSE_MODE_CAPTURED
@@ -124,11 +111,6 @@ func _unhandled_input(event: InputEvent) -> void:
 
 func _physics_process(delta: float) -> void:
 	last_delta = delta
-	
-	if Input is InputEventScreenTouch:
-		vars.on_mobil = true
-	else:
-		vars.on_mobil = false
 	
 	#Can't Control
 	if !CAN_CONTROL: return
@@ -193,8 +175,7 @@ func _physics_process(delta: float) -> void:
 			velocity *= 0.7
 	
 	# Get the input direction and handle the movement/deceleration.
-	if !vars.on_mobil:
-		direction = Input.get_axis("left", "right")
+	direction = Input.get_axis("left", "right")
 	if wall_jump_lock > 0:
 		wall_jump_lock -= delta
 		velocity.x = move_toward(velocity.x, velocity.x, 0.2)
@@ -250,7 +231,6 @@ func _physics_process(delta: float) -> void:
 		coyote.stop()
 
 func speed_set() -> void:
-	if vars.on_mobil: return
 	if Input.is_action_pressed("run"):
 		speed = RUN_SPEED
 	else:
@@ -296,9 +276,7 @@ func anims() -> void:
 		if !animater.is_playing():
 			animater.play("fall")
 	elif direction != 0:
-		if vars.on_mobil and vars.is_mobile_running:
-			animater.play("run")
-		elif Input.is_action_pressed("run"):
+		if Input.is_action_pressed("run"):
 			animater.play("run")
 		else:
 			animater.play("walk")
@@ -472,17 +450,11 @@ func _on_dash_unlock_body_entered(body: Node2D) -> void:
 	if body is Player:
 		vars.dash_unlocked = true
 		for i in range(15):
-			if vars.on_mobil:
-				dash_tutorial_mobil.visible_characters += 1
-			else:
-				dash_tutorial.visible_characters += 1
+			dash_tutorial.visible_characters += 1
 			await get_tree().create_timer(0.02).timeout
 		await get_tree().create_timer(2).timeout
 		for i in range(15):
-			if vars.on_mobil:
-				dash_tutorial_mobil.visible_characters -= 1
-			else:
-				dash_tutorial.visible_characters -= 1
+			dash_tutorial.visible_characters -= 1
 			await get_tree().create_timer(0.02).timeout
 		$"../DashUnlock/CollisionShape2D".queue_free()
 
@@ -502,17 +474,11 @@ func _on_attack_unlock_body_entered(body: Node2D) -> void:
 	if body is Player:
 		vars.attack_unlocked = true
 		for i in range(17):
-			if vars.on_mobil:
-				attack_tutorial_mobil.visible_characters += 1
-			else:
-				attack_tutorial.visible_characters += 1
+			attack_tutorial.visible_characters += 1
 			await get_tree().create_timer(0.02).timeout
 		await get_tree().create_timer(3).timeout
 		for i in range(17):
-			if vars.on_mobil:
-				attack_tutorial_mobil.visible_characters -= 1
-			else:
-				attack_tutorial.visible_characters -= 1
+			attack_tutorial.visible_characters -= 1
 			await get_tree().create_timer(0.02).timeout
 		$"../AttackUnlock/CollisionShape2D".disabled = true
 
@@ -523,17 +489,11 @@ func _on_area_2d_body_entered(body: Node2D) -> void:
 func _on_run_unlock_body_entered(body: Node2D) -> void:
 	if body is Player:
 		for i in range(14):
-			if vars.on_mobil:
-				run_tutorial_mobil.visible_characters += 1
-			else:
-				run_tutorial.visible_characters += 1
+			run_tutorial.visible_characters += 1
 			await get_tree().create_timer(0.02).timeout
 		await get_tree().create_timer(3).timeout
 		for i in range(14):
-			if vars.on_mobil:
-				run_tutorial_mobil.visible_characters -= 1
-			else:
-				run_tutorial.visible_characters -= 1
+			run_tutorial.visible_characters -= 1
 			await get_tree().create_timer(0.02).timeout
 		$"../RunUnlock/CollisionShape2D".disabled = true
 
@@ -560,11 +520,9 @@ func _on_pause_released() -> void:
 	vars.pause = true
 
 func _on_run_pressed() -> void:
-	vars.is_mobile_running = true
 	speed = RUN_SPEED
 
 func _on_run_released() -> void:
-	vars.is_mobile_running = false
 	speed = WALK_SPEED
 
 func _on_left_released() -> void:
